@@ -48,6 +48,10 @@ const Test = () => {
     socket.emit("create-room");
   };
 
+  const leaveConversation = () => {
+    socket.emit("leave-conversation");
+  };
+
   return (
     <div
       style={{
@@ -58,7 +62,7 @@ const Test = () => {
       }}
     >
       <button onClick={connect}>Connect</button>
-      <button onClick={disconnect}>Disconnect</button>
+      <button onClick={leaveConversation}>Disconnect</button>
       <div
         style={{
           display: "flex",
@@ -77,13 +81,6 @@ const Test = () => {
         onChange={(event) => setMessage(event.target.value)}
       />
       <button onClick={sendMessage}>Send</button>
-      {myRoom}
-      <input
-        type="text"
-        value={room}
-        onChange={(e) => setRoom(e.target.value)}
-      />
-      <button onClick={joinRoom}>отправиться</button>
       <button
         onClick={() => {
           socket.emit("search-room");

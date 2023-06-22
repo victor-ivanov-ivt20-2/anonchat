@@ -10,7 +10,7 @@ interface Search {
 }
 interface State {
   current_room: string | undefined;
-  active_search: boolean;
+  is_talk: boolean;
   search: Search;
 }
 async function main() {
@@ -20,7 +20,7 @@ async function main() {
 
     const state: State = {
       current_room: undefined,
-      active_search: false,
+      is_talk: false,
       search: { sex: undefined },
     };
 
@@ -37,6 +37,7 @@ async function main() {
         new_room++;
         socket.join(new_room.toString());
         state.current_room = new_room.toString();
+        state.is_talk = true;
         state.search.sex = "Male";
         socket.data = state;
       }
@@ -52,15 +53,41 @@ async function main() {
           socket.leave(state.current_room);
           state.current_room = current_room;
           socket.join(current_room);
+          state.is_talk = true;
           socket.data = state;
         }
+        console.log("rooms", rooms);
       } catch {
         if (state.current_room) socket.leave(state.current_room);
       }
     });
 
+    socket.on("leave-conversation", () => {
+      if (!state.current_room) return;
+      const current_room = state.current_room;
+      const rooms = io.sockets.adapter.rooms;
+      const IterClient = rooms.get(state.current_room)?.keys();
+      if (!IterClient) return;
+      const clients = Array.from(IterClient);
+      clients.forEach((id) => {
+        const client = io.sockets.sockets.get(id);
+        client?.leave(current_room);
+        if (client?.data !== null && client?.data !== undefined) {
+          const default_data: State = {
+            search: { sex: undefined },
+            is_talk: false,
+            current_room: undefined,
+          };
+          client!.data = default_data;
+        }
+      });
+      console.log("rooms", rooms);
+      console.log("clients", clients);
+    });
+
     socket.on("send-message", (message) => {
-      if (typeof state.current_room === "string") {
+      console.log("rooms", io.sockets.adapter.rooms);
+      if (state.is_talk && typeof state.current_room === "string") {
         socket.broadcast
           .to(state.current_room)
           .emit("receive-message", message);
