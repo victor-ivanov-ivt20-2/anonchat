@@ -10,8 +10,21 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/react": "^2.2.1",
     "@astrojs/solid-js": "^2.2.0",
+    "@solid-primitives/websocket": "^1.1.0",
+    "@types/react": "^18.2.12",
+    "@types/react-dom": "^18.2.5",
     "astro": "^2.6.4",
-    "solid-js": "^1.7.6"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "socket.io-client": "^4.6.2",
+    "solid-js": "^1.7.6",
+    "ws": "^8.13.0"
+  },
+  "devDependencies": {
+    "@prisma/client": "^4.16.0",
+    "@types/node": "^20.3.1",
+    "prisma": "^4.16.0"
   }
 }
