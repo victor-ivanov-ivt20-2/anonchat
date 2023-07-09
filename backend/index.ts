@@ -1,48 +1,49 @@
-import { Server } from "socket.io";
-
-// socket.io without DataBASE
-const io = new Server({
-  cors: {
-    origin: "*",
-  },
-  pingTimeout: 60000,
-});
-
-async function leavePrivateRoom(room: string) {
-  const opponent = await io.in(room).fetchSockets();
-  if (opponent.length) opponent[0].leave(room);
-}
+import { SeekerModel } from "./models/user.model";
+import logger from "./lib/logger";
+import { searchCriteria } from "./lib/search";
+import { leavePrivateRoom } from "./lib/chat";
+import { io } from "./socket";
 
 async function main() {
   let newRoom: number = 0;
   io.on("connection", (socket) => {
-    socket.on("search-opponent", async () => {
+    socket.on("search-opponent", async (seeker: SeekerModel) => {
       const waitingRoom = "searching";
       try {
         const chatters = await io.in(waitingRoom).fetchSockets();
-        if (chatters.length) {
-          const chatter = chatters[0];
+        socket.data.searching = seeker;
+        for (let i = 0; i < chatters.length; i++) {
+          if (chatters[i].id === socket.id) continue;
+          const chatter = chatters[i];
+          const candidate = chatter.data.searching;
+          if (searchCriteria(candidate, seeker)) continue;
           const newRoomString = (++newRoom).toString();
           chatter.leave(waitingRoom);
-          chatter.data.room = newRoomString;
-          socket.data.room = newRoomString;
           chatter.join(newRoomString);
           socket.join(newRoomString);
+          chatter.data.privateRoom = newRoomString;
+          socket.data.privateRoom = newRoomString;
           chatter.emit("room-found", true);
           socket.emit("room-found", true);
-        } else {
-          socket.join(waitingRoom);
+          return;
         }
-      } catch {}
+        socket.join(waitingRoom);
+      } catch (e) {
+        console.log(e);
+      }
     });
 
     socket.on("leave-opponent", () => {
-      leavePrivateRoom(socket.data.room);
-      socket.leave(socket.data.room);
+      if (!socket.data.privateRoom) return;
+      const room: string = socket.data.privateRoom;
+      leavePrivateRoom(room).then((status) => {
+        if (status) socket.leave(room);
+      });
     });
 
     socket.on("disconnect", () => {
-      leavePrivateRoom(socket.data.room);
+      if (!socket.data.privateRoom) return;
+      leavePrivateRoom(socket.data.privateRoom).catch((e) => logger.error(e));
     });
 
     socket.on("get-online", () => {
@@ -51,16 +52,16 @@ async function main() {
 
     socket.on("send-message", (message) => {
       const state = socket.data;
-      if (typeof state.room === "string") {
-        socket.to(state.room).emit("receive-message", message);
+      if (typeof state.privateRoom === "string") {
+        socket.to(state.privateRoom).emit("receive-message", message);
       }
     });
 
-    socket.on("typing", (active) => {
+    socket.on("typing-message", (active) => {
       const state = socket.data;
-      if (!state.room) return;
-      if (active) socket.to(state.room).emit("get-typing-status", true);
-      else socket.to(state.room).emit("get-typing-status", false);
+      if (!state.privateRoom) return;
+      if (active) socket.to(state.privateRoom).emit("get-typing-status", true);
+      else socket.to(state.privateRoom).emit("get-typing-status", false);
     });
   });
 
