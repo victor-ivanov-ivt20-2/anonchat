@@ -5,6 +5,7 @@ export interface ServerToClientEvents {
   "get-typing-status": (status: boolean) => void;
   "receive-message": (message: string) => void;
   "get-online-users": (count: number) => void;
+  "opponent-left": (status: boolean) => void;
 }
 
 export interface ClientToServerEvents {

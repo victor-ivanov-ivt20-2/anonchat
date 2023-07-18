@@ -2,7 +2,7 @@ import { SeekerModel } from "./models/user.model";
 import logger from "./lib/logger";
 import { searchCriteria } from "./lib/search";
 import { leavePrivateRoom } from "./lib/chat";
-import { io } from "./socket";
+import io from "./socket";
 
 async function main() {
   let newRoom: number = 0;
@@ -37,13 +37,20 @@ async function main() {
       if (!socket.data.privateRoom) return;
       const room: string = socket.data.privateRoom;
       leavePrivateRoom(room).then((status) => {
-        if (status) socket.leave(room);
+        if (status) {
+          socket.leave(room);
+          socket.emit("opponent-left", status);
+        }
       });
     });
 
     socket.on("disconnect", () => {
       if (!socket.data.privateRoom) return;
-      leavePrivateRoom(socket.data.privateRoom).catch((e) => logger.error(e));
+      leavePrivateRoom(socket.data.privateRoom)
+        .then((status) => {
+          socket.emit("opponent-left", status);
+        })
+        .catch((e) => logger.error(e));
     });
 
     socket.on("get-online", () => {

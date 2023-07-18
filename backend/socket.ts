@@ -7,7 +7,7 @@ import {
 } from "./models/socket.model";
 
 // socket.io without DataBASE
-export const io = new Server<
+const io = new Server<
   ClientToServerEvents,
   ServerToClientEvents,
   InterServerEvents,
@@ -18,3 +18,5 @@ export const io = new Server<
   },
   pingTimeout: 60000,
 });
+
+export default io;

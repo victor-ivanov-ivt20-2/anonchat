@@ -1,4 +1,4 @@
-import { io } from "../socket";
+import io from "../socket";
 import logger from "./logger";
 
 export async function leavePrivateRoom(room: string): Promise<boolean> {
@@ -6,6 +6,7 @@ export async function leavePrivateRoom(room: string): Promise<boolean> {
     const opponent = await io.in(room).fetchSockets();
     if (opponent.length) {
       opponent[0].leave(room);
+      opponent[0].emit("opponent-left", true);
       return true;
     }
     return false;
