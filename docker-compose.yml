@@ -1,0 +1,19 @@
+version: '3.9'
+
+services:
+  backend:
+    container_name: anonchat_backend
+    build:
+      context: ./backend/.
+      dockerfile: Dockerfile
+    ports:
+      - '5000:5000'
+  frontend:
+    container_name: anonchat_frontend
+    build:
+      context: ./frontend/.
+      dockerfile: Dockerfile
+    ports:
+      - '8080:8080'
+    depends_on:
+      - backend

@@ -1,3 +1,4 @@
 /node_modules
 .env
 /prisma/.env.docker
+/dist
